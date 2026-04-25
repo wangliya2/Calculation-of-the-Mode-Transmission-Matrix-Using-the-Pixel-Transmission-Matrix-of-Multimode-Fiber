@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data files (large)
+data/input_tiff/*.tiff
+data/input_tiff/*.tif
+data/standard_lp_modes/*.npy
+data/output_mtm/
+
+# Reports (generated)
+report/files/_tmp_validation/
+report/figures/src/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# TensorFlow
+*.h5
+*.keras
+saved_models/

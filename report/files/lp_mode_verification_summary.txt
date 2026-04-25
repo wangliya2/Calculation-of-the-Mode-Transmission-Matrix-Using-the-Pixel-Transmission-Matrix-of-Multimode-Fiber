@@ -1,0 +1,29 @@
+LP 模式仿真一致性报告（Task 1 理论掌握验证）
+======================================
+
+仿真模式数量: 8
+网格大小: (500, 500)
+参考数据目录: C:\Users\Asus\Desktop\毕设\MTM_Project_CN\data\standard_lp_modes
+参考数据来源: internal_fallback
+参考数据命名约定: LP01_intensity.npy 等（强度二维数组，尺寸需与仿真一致）
+
+注意：当前参考数据来自项目内部生成（standard_lp_modes），属于“内部一致性验证”。
+若需满足“外部一致性验证”，请将 RP Fiber Power / Lumerical 导出的强度数组放入 data/reference_lp_modes。
+
+说明：LP(l>0) 模式存在简并，强度图可能出现旋转/镜像等价。
+本报告使用“平移 + 旋转 + 翻转对齐后取最大 CCC”的结果作为验收指标。
+
+平均 CCC（对齐后，有参考的模式）: 0.9999
+LP01 CCC（对齐后，若有参考）: 1.0000
+理论要求阈值: 平均≥0.85, LP01≥0.90
+是否通过理论验证: 是
+
+逐模式结果:
+  模式 LP01: CCC_raw = 1.0000, CCC_best = 1.0000, best_angle=132度, flip=none, shift=(0, 0) px
+  模式 LP02: CCC_raw = 0.9998, CCC_best = 0.9999, best_angle=45度, flip=none, shift=(0, 0) px
+  模式 LP11: CCC_raw = 0.9999, CCC_best = 0.9999, best_angle=180度, flip=lr, shift=(0, 0) px
+  模式 LP12: CCC_raw = 0.9999, CCC_best = 0.9999, best_angle=0度, flip=none, shift=(0, 0) px
+  模式 LP21: CCC_raw = 0.9999, CCC_best = 0.9999, best_angle=0度, flip=none, shift=(0, 0) px
+  模式 LP22: CCC_raw = 0.9998, CCC_best = 0.9998, best_angle=180度, flip=none, shift=(0, 0) px
+  模式 LP31: CCC_raw = 0.9999, CCC_best = 0.9999, best_angle=120度, flip=none, shift=(0, 0) px
+  模式 LP03: CCC_raw = 0.9995, CCC_best = 0.9998, best_angle=319度, flip=none, shift=(0, 0) px

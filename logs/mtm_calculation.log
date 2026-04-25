@@ -1,0 +1,6 @@
+2026-02-24 16:12:23,576 [INFO] root: MTM计算日志系统初始化完成
+2026-02-24 16:12:23,578 [INFO] mtm_pipeline: 项目根目录: C:\Users\Asus\Desktop
+2026-02-24 16:12:23,578 [INFO] mtm_pipeline: 输入目录: C:\Users\Asus\Desktop\data\input_tiff
+2026-02-24 16:12:23,578 [INFO] mtm_pipeline: 输出目录: C:\Users\Asus\Desktop\data\output_mtm
+2026-02-24 16:12:23,578 [INFO] mtm_pipeline: 日志文件: C:\Users\Asus\Desktop\logs\mtm_calculation.log
+2026-02-24 16:12:23,581 [WARNING] mtm_pipeline: 未在 data/input_tiff 中找到任何PTM TIFF文件，流程结束
