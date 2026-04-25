@@ -697,7 +697,19 @@ try:
             "sim_extent_um": FiberParams.sim_extent_um,
         }
 
-        M_out0, _ = recon.build_output_mode_matrix(grid_size=grid_size, fiber_params=fiber_params)
+        # Build an intentionally misaligned output basis for the "before" panel,
+        # so the correction effect is visually obvious.
+        misalign_before = {
+            "scale": 1.04,
+            "shift_x_px": 8.0,
+            "shift_y_px": -6.0,
+            "rotation_deg": 6.0,
+        }
+        M_out0, _ = recon.build_output_mode_matrix(
+            grid_size=grid_size,
+            fiber_params=fiber_params,
+            correction_params=misalign_before,
+        )
         k0 = min(M_out0.shape[1], n_in, MTMConfig.num_modes)
         M_in = _build_m_in_hadamard(n_input=n_in, n_modes=k0)
 
@@ -723,6 +735,16 @@ try:
         mag0 = np.abs(T_before)
         mag1 = np.abs(T_after)
 
+        def _offdiag_ratio(m: np.ndarray) -> float:
+            n = m.shape[0]
+            mask = np.eye(n, dtype=bool)
+            off = m[~mask]
+            diag = m[mask]
+            return float(np.linalg.norm(off) / (np.linalg.norm(diag) + 1e-12))
+
+        r_before = _offdiag_ratio(mag0)
+        r_after = _offdiag_ratio(mag1)
+
         fig, axes = plt.subplots(1, 4, figsize=(23, 5))
 
         # Left: pixel-domain matrix magnitude
@@ -736,14 +758,14 @@ try:
         vmax_m = float(max(np.max(mag0), np.max(mag1), 1e-12))
         # Middle: mode-domain before correction
         im0 = axes[1].imshow(mag0, cmap="viridis", origin="lower", vmin=0.0, vmax=vmax_m)
-        axes[1].set_title("Before correction", fontsize=12, fontweight="bold")
+        axes[1].set_title(f"Before correction (off/diag={r_before:.3f})", fontsize=12, fontweight="bold")
         axes[1].set_xlabel("Input mode index")
         axes[1].set_ylabel("Output mode index")
         plt.colorbar(im0, ax=axes[1], fraction=0.046, pad=0.04, label="|H_modes|")
 
         # Right-middle: mode-domain after correction
         im1 = axes[2].imshow(mag1, cmap="viridis", origin="lower", vmin=0.0, vmax=vmax_m)
-        axes[2].set_title("After correction", fontsize=12, fontweight="bold")
+        axes[2].set_title(f"After correction (off/diag={r_after:.3f})", fontsize=12, fontweight="bold")
         axes[2].set_xlabel("Input mode index")
         axes[2].set_ylabel("Output mode index")
         plt.colorbar(im1, ax=axes[2], fraction=0.046, pad=0.04, label="|H_modes|")
