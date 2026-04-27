@@ -16,65 +16,65 @@ from src.mtm_calculator import run_mtm_pipeline
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="PTM(TIFF) -> MTM 端到端流程（Plöschner 2015）"
+        description="End-to-end PTM(TIFF) -> MTM pipeline (Plöschner 2015)"
     )
     p.add_argument(
         "--input-dir",
         type=str,
         default=Paths.input_tiff_dir,
-        help="包含PTM TIFF文件的文件夹（默认：data/input_tiff）",
+        help="Directory containing PTM TIFF files (default: data/input_tiff)",
     )
     p.add_argument(
         "--output-dir",
         type=str,
         default=Paths.output_dir,
-        help="输出结果写入的文件夹（默认：data/output_mtm）",
+        help="Output directory (default: data/output_mtm)",
     )
     p.add_argument(
         "--num-modes",
         type=int,
         default=MTMConfig.num_modes,
-        help="使用的LP模式（LP mode）数量（默认：8）",
+        help="Number of LP modes to use (default: 8)",
     )
     p.add_argument(
         "--disable-auto-num-modes",
         action="store_true",
-        help="关闭基于当前光纤参数的自动模式数限制",
+        help="Disable auto limit of supported mode count based on fiber parameters",
     )
     p.add_argument(
         "--denoise-method",
         type=str,
         default=PreprocessConfig.denoise_method,
         choices=["gaussian", "median", "bilateral"],
-        help="振幅的去噪方法（默认：gaussian；bilateral 保边，适合 LP 环状场）",
+        help="Amplitude denoising method (default: gaussian; bilateral preserves edges)",
     )
     p.add_argument(
         "--input-basis",
         type=str,
         default="hadamard",
         choices=["hadamard", "identity", "file"],
-        help="M_in的输入基：hadamard/identity/或从文件加载（默认：hadamard）",
+        help="Input basis for M_in: hadamard/identity/or load from file (default: hadamard)",
     )
     p.add_argument(
         "--m-in-path",
         type=str,
         default="data/standard_lp_modes/M_in_hadamard_8.npy",
-        help="当--input-basis=file时，从此路径加载M_in（默认指向生成的文件）",
+        help="When --input-basis=file, load M_in from this path",
     )
     p.add_argument(
         "--basis-correction",
         action="store_true",
-        help="启用模式基校正（缩放/平移/旋转优化）",
+        help="Enable basis correction (scale/shift/rotation optimization)",
     )
     p.add_argument(
         "--basis-correction-no-opt",
         action="store_true",
-        help="启用模式基校正但不做参数优化（使用默认参数）",
+        help="Enable basis correction without optimizing parameters (use defaults)",
     )
     p.add_argument(
         "--joint-basis-correction",
         action="store_true",
-        help="在 basis-correction 优化时，若 M_in 为空间模式矩阵 (H*W,N_modes)，则与 M_out 使用同一组几何参数联合优化",
+        help="During basis correction, if M_in is spatial (H*W,N_modes), jointly optimize with M_out using the same geometry",
     )
     return p
 
@@ -119,7 +119,9 @@ def main() -> None:
         )
         use_modes = min(req_modes, auto_modes)
         if use_modes < req_modes:
-            print(f"[AutoMode] 请求模式数={req_modes}，可支持模式数≈{auto_modes}，自动降为 {use_modes}")
+            print(
+                f"[AutoMode] requested={req_modes}, supported≈{auto_modes}, using={use_modes}"
+            )
     else:
         use_modes = req_modes
 

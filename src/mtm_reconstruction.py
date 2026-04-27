@@ -1,14 +1,14 @@
 """
-模式传输矩阵（MTM）重建模块
+MTM reconstruction module.
 
-基于Ploeschner等人2015年的算法：
-    H_modes = M_out^dagger * H_pixel * M_in
+Implements the projection (Ploeschner et al., 2015):
+    H_modes = M_out^H * H_pixel * M_in
 
-维度约定：
-    - H_pixel  : 标准化的复数PTM（像素基），形状为 (N_out_pix, N_in_pattern)
-    - M_out    : 输出LP模式基向量（像素基），形状为 (N_out_pix, N_modes)
-    - M_in     : 输入LP模式基向量（激发基），形状为 (N_in_pattern, N_modes)
-    - H_modes  : 模式传输矩阵（MTM），形状为 (N_modes, N_modes)
+Shape conventions:
+    - H_pixel : complex PTM in pixel basis, shape (N_out_pix, N_in_pattern)
+    - M_out   : output LP-mode basis in pixel basis, shape (N_out_pix, N_modes)
+    - M_in    : input basis, shape (N_in_pattern, N_modes)
+    - H_modes : MTM, shape (N_modes, N_modes)
 """
 
 from __future__ import annotations
@@ -27,16 +27,15 @@ logger = logging.getLogger(__name__)
 
 class MTMReconstructor:
     """
-    模式传输矩阵（MTM）重建器
-    基于Ploeschner等人“Seeing through chaos in multimode fibres”（2015）
+    MTM reconstructor (Ploeschner et al., 2015).
     """
 
     def __init__(self, num_modes: int = 10) -> None:
         """
-        初始化MTM重建器。
+        Initialize the reconstructor.
 
-        参数:
-            num_modes: LP模式数量（M_in/M_out的列数）
+        Args:
+            num_modes: number of LP modes (columns of M_in/M_out)
         """
         self.num_modes = num_modes
         self.mtm: np.ndarray | None = None
@@ -52,9 +51,9 @@ class MTMReconstructor:
         correction_params: Dict[str, float] | None = None,
     ) -> np.ndarray:
         """
-        基于弱导近似LP模式求解生成模式场分布。
+        Generate LP mode fields under the weakly guiding approximation.
 
-        返回:
+        Returns:
             modes: (num_modes, H, W)
         """
         height, width = grid_size
@@ -85,12 +84,14 @@ class MTMReconstructor:
             if lm not in mode_order:
                 mode_order.append(lm)
         if not mode_order:
-            raise RuntimeError("当前光纤参数下未找到可支持LP模式，请调整参数")
+            raise RuntimeError(
+                "No supported LP modes found for the current fiber parameters."
+            )
 
         use_modes = min(self.num_modes, len(mode_order))
         if use_modes < self.num_modes:
             logger.warning(
-                "请求模式数=%d 超过可支持模式数=%d，自动降为 %d",
+                "Requested modes=%d exceeds supported=%d; falling back to %d",
                 self.num_modes, len(mode_order), use_modes,
             )
         modes: list[np.ndarray] = []
@@ -109,7 +110,7 @@ class MTMReconstructor:
                 norm = np.linalg.norm(field) + 1e-12
                 modes.append((field / norm).astype(np.complex128))
             except Exception as exc:
-                logger.warning("模式 LP(%d,%d) 生成失败，跳过该模式: %s", l, m, exc)
+                logger.warning("LP(%d,%d) generation failed; skipping: %s", l, m, exc)
                 continue
 
         if correction_params:
@@ -131,10 +132,10 @@ class MTMReconstructor:
             modes = corrected
 
         if not modes:
-            raise RuntimeError("模式生成失败：没有可用模式")
+            raise RuntimeError("Mode generation failed: no usable modes.")
         modes_arr = np.asarray(modes, dtype=np.complex128)
         logger.info(
-            "基于LP理论生成 %d 个模式场，网格=(%d, %d), 半径=%.2fum, 范围=±%.2fum",
+            "Generated %d LP modes on grid=(%d,%d), core_radius=%.2fum, extent=±%.2fum",
             modes_arr.shape[0], height, width, core_radius, sim_extent_um,
         )
         return modes_arr
@@ -147,7 +148,7 @@ class MTMReconstructor:
         shift_y_px: float,
         rotation_deg: float,
     ) -> np.ndarray:
-        """对复模式场施加缩放/旋转/平移，用于模式基误差校正。"""
+        """Apply scale/rotation/shift to a complex mode field."""
         real = np.asarray(field.real, dtype=np.float64)
         imag = np.asarray(field.imag, dtype=np.float64)
 
@@ -174,7 +175,7 @@ class MTMReconstructor:
 
     @staticmethod
     def _center_crop_or_pad(arr: np.ndarray, target_shape: tuple[int, int]) -> np.ndarray:
-        """将缩放后的数组中心裁剪/填充回目标尺寸。"""
+        """Center-crop or pad an array back to target shape."""
         th, tw = target_shape
         h, w = arr.shape
         out = np.zeros(target_shape, dtype=arr.dtype)
@@ -196,14 +197,14 @@ class MTMReconstructor:
         vecs: np.ndarray, tol: float = 1e-10
     ) -> Tuple[np.ndarray, float]:
         """
-        对列向量执行Gram-Schmidt正交归一化。
+        Gram-Schmidt column orthonormalization.
 
-        参数:
-            vecs: (N_pixel, N_modes) 原始列向量
+        Args:
+            vecs: (N_pixel, N_modes) column vectors
 
-        返回:
-            q: 正交归一化后的列向量 (N_pixel, N_modes)
-            max_offdiag: 正交误差（内积矩阵非对角线最大绝对值）
+        Returns:
+            q: (N_pixel, K) orthonormalized columns (K <= N_modes)
+            max_offdiag: max absolute off-diagonal entry of q^H q
         """
         n_pix, n_modes = vecs.shape
         q = np.zeros((n_pix, n_modes), dtype=np.complex128)
@@ -222,7 +223,7 @@ class MTMReconstructor:
         if col < n_modes:
             q = q[:, :col]
             logger.warning(
-                "Gram-Schmidt: 有效模式数少于预期: 预期=%d，实际=%d",
+                "Gram-Schmidt: fewer valid modes than requested: requested=%d, got=%d",
                 n_modes, col,
             )
 
@@ -240,11 +241,11 @@ class MTMReconstructor:
         correction_params: Dict[str, float] | None = None,
     ) -> Tuple[np.ndarray, float]:
         """
-        从LP模式场构建输出端像素基矩阵M_out，并进行Gram-Schmidt正交归一化。
+        Build output pixel-basis matrix M_out from LP modes and orthonormalize it.
 
-        返回:
-            M_out:    (N_out_pix, N_modes)
-            orth_err: 模式正交性误差
+        Returns:
+            M_out: (N_out_pix, N_modes)
+            orth_err: orthogonality error after orthonormalization
         """
         modes = self.generate_lp_modes(
             grid_size,
@@ -261,12 +262,12 @@ class MTMReconstructor:
 
         if M_out.shape[1] < self.num_modes:
             logger.warning(
-                "正交归一化后模式数量减少: 预期=%d，实际=%d",
+                "After orthonormalization, fewer modes remain: expected=%d, got=%d",
                 self.num_modes, M_out.shape[1],
             )
 
         logger.info(
-            "M_out构建完成: N_out_pix=%d, N_modes=%d, 正交误差=%.3e",
+            "Built M_out: N_out_pix=%d, N_modes=%d, orth_err=%.3e",
             n_pix, M_out.shape[1], orth_err,
         )
         return M_out, orth_err
@@ -280,7 +281,7 @@ class MTMReconstructor:
         correction_cfg: Dict[str, float],
     ) -> Tuple[np.ndarray, float, Dict[str, float]]:
         """
-        优化模式基的缩放/平移/旋转，最小化MTM非对角能量占比。
+        Optimize output-basis scale/shift/rotation to minimize off-diagonal energy ratio.
         """
         scale_min = float(correction_cfg.get("scale_min", 0.9))
         scale_max = float(correction_cfg.get("scale_max", 1.1))

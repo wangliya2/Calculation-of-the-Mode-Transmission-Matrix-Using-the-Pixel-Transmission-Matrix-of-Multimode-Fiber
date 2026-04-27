@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 """
-项目配置文件
+Project configuration.
 
-包含光纤参数、预处理设置、MTM计算阈值和默认目录路径。
+Defines fiber parameters, preprocessing settings, MTM thresholds, and default paths.
 """
 
 from dataclasses import dataclass
@@ -12,8 +12,8 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class FiberParams:
     """
-    光纤参数（用于LP模式基矢构造和仿真）
-    单位：微米（um），除非另有说明
+    Fiber parameters used for LP-mode simulation and basis construction.
+    Units are micrometers (um) unless noted otherwise.
     """
 
     core_diameter_um: float = 50.0      
@@ -28,7 +28,7 @@ class FiberParams:
 @dataclass(frozen=True)
 class PreprocessConfig:
     """
-    PTM数据预处理参数
+    PTM preprocessing parameters.
     """
 
     denoise_method: str = "gaussian"    
@@ -43,7 +43,7 @@ class PreprocessConfig:
 @dataclass(frozen=True)
 class MTMConfig:
     """
-    MTM计算与验收阈值配置
+    MTM computation and acceptance thresholds.
     """
 
     num_modes: int = 8                  
@@ -55,7 +55,7 @@ class MTMConfig:
 @dataclass(frozen=True)
 class BasisCorrectionConfig:
     """
-    模式基校正配置（参考文献中“基底误差导致伪耦合”的思路）
+    Basis-correction configuration (to reduce pseudo-coupling caused by geometric mismatch).
     """
     enabled: bool = False
     optimize: bool = True
@@ -69,9 +69,9 @@ class BasisCorrectionConfig:
 @dataclass(frozen=True)
 class Paths:
     """
-    默认目录结构
-    - input_tiff_dir: 存放PTM TIFF文件（支持批量处理）
-    - output_dir:     输出MTM结果（指标、热力图、日志，每次运行独立子目录）
+    Default directory structure.
+    - input_tiff_dir: PTM TIFF inputs (batch supported)
+    - output_dir:     MTM outputs (metrics, heatmaps, logs; timestamped runs)
     """
 
     input_tiff_dir: str = "data/input_tiff"
